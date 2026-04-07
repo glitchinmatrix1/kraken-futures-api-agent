@@ -34,8 +34,8 @@ LIVE_FIELDS = {
     "predicted absolute funding rate":("tickers","fundingRatePrediction"),"predicted funding rate":("tickers","fundingRatePrediction"),"funding prediction":("tickers","fundingRatePrediction"),
     "current absolute funding rate":("tickers","fundingRate"),"funding rate":("tickers","fundingRate"),"funding":("tickers","fundingRate"),
     # tickers - volume/market
-    "24hvol$":("tickers","vol24h"),"24h vol":("tickers","vol24h"),"vol24h":("tickers","vol24h"),"volume":("tickers","vol24h"),"vol":("tickers","vol24h"),
-    "24hvolquote":("tickers","volumeQuote"),"volume quote":("tickers","volumeQuote"),"vol quote":("tickers","volumeQuote"),
+    "24hvol$":("tickers","volumeQuote"),"24h vol":("tickers","volumeQuote"),"vol24h":("tickers","volumeQuote"),"volume":("tickers","volumeQuote"),"vol":("tickers","volumeQuote"),
+    "24hvolquote":("tickers","vol24h"),"volume quote":("tickers","vol24h"),"vol quote":("tickers","vol24h"),
     "open interest":("tickers","openInterest"),"oi":("tickers","openInterest"),
     "24h open":("tickers","open24h"),"open24h":("tickers","open24h"),
     "24h high":("tickers","high24h"),"high24h":("tickers","high24h"),
@@ -227,8 +227,10 @@ def process(text, hist):
             msg = e.get("content","")
             if not sym: sym = extract_symbol(msg)
             if not res: res = extract_resolution(msg)
-            if not dt_from: dt_from, amb_from = extract_datetime(msg)
-            if not snapshot and any(k in msg.lower() for k in ("now","latest","snapshot")): snapshot = True
+            # Only pull datetime from user messages — assistant clarify messages contain example dates that would bleed in
+            if e.get("role") == "user":
+                if not dt_from: dt_from, amb_from = extract_datetime(msg)
+                if not snapshot and any(k in msg.lower() for k in ("now","latest","snapshot")): snapshot = True
         missing = []
         if not sym: missing.append("symbol (e.g. PF_ETHUSD)")
         if not res: missing.append("interval (e.g. 1m, 5m, 1h)")
@@ -449,7 +451,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     <div class="dropdown-btn" onclick="toggleDD('dd-tickers')">Tickers <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
     <div class="dropdown-menu">
       <div class="dropdown-item" onclick="pick('dd-tickers','vol24h')">24hVol$</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','volume quote')">24hVolQuote</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','volume quote')">24hVolBase</div>
       <div class="dropdown-item" onclick="pick('dd-tickers','24h change')">24h Change</div>
       <div class="dropdown-item" onclick="pick('dd-tickers','high24h')">24h High</div>
       <div class="dropdown-item" onclick="pick('dd-tickers','low24h')">24h Low</div>
