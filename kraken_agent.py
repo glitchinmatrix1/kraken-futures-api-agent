@@ -37,7 +37,7 @@ LIVE_FIELDS = {
     "24hvol$":("tickers","vol24h"),"24h vol":("tickers","vol24h"),"vol24h":("tickers","vol24h"),"volume":("tickers","vol24h"),"vol":("tickers","vol24h"),
     "24hvolquote":("tickers","volumeQuote"),"volume quote":("tickers","volumeQuote"),"vol quote":("tickers","volumeQuote"),
     "open interest":("tickers","openInterest"),"oi":("tickers","openInterest"),
-    "24h volume":("tickers","open24h"),"open24h":("tickers","open24h"),
+    "24h open":("tickers","open24h"),"open24h":("tickers","open24h"),
     "24h high":("tickers","high24h"),"high24h":("tickers","high24h"),
     "24h low":("tickers","low24h"),"low24h":("tickers","low24h"),
     "24h vwap":("tickers","vwap24h"),"vwap":("tickers","vwap24h"),"vwap24h":("tickers","vwap24h"),
@@ -407,7 +407,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
       <div class="dropdown-item" onclick="pick('dd-tickers','vol24h')">24hVol$</div>
       <div class="dropdown-item" onclick="pick('dd-tickers','volume quote')">24hVolQuote</div>
       <div class="dropdown-item" onclick="pick('dd-tickers','open interest')">Open Interest</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','open24h')">24h Volume</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','open24h')">24h Open</div>
       <div class="dropdown-item" onclick="pick('dd-tickers','high24h')">24h High</div>
       <div class="dropdown-item" onclick="pick('dd-tickers','low24h')">24h Low</div>
       <div class="dropdown-item" onclick="pick('dd-tickers','vwap24h')">24h VWAP</div>
