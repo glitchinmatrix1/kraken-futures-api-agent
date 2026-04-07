@@ -364,7 +364,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .chip:hover{border-color:var(--purple);color:var(--purple2)}
 .dropdowns{width:100%;max-width:720px;display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
 .dropdown{position:relative}
-.dropdown-btn{font-size:11px;padding:4px 10px;border:0.5px solid var(--border2);border-radius:20px;cursor:pointer;color:var(--text3);background:transparent;font-family:var(--mono);display:flex;align-items:center;gap:5px;transition:border-color .15s,color .15s;white-space:nowrap}
+.dropdown-btn{font-size:11px;padding:4px 10px;border:0.5px solid var(--border2);border-radius:20px;cursor:pointer;color:var(--text2);background:var(--bg2);font-family:var(--mono);display:flex;align-items:center;gap:5px;transition:border-color .15s,color .15s;white-space:nowrap}
 .dropdown-btn:hover,.dropdown-btn.open{border-color:var(--purple);color:var(--purple2)}
 .dropdown-btn svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
 .dropdown-btn.open svg{transform:rotate(180deg)}
@@ -388,6 +388,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .ohlc-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:var(--mono)}
 .ohlc-val{font-size:14px;font-weight:500;font-family:var(--mono)}
 .candle-header{font-size:12px;color:var(--text3);margin-bottom:6px;font-family:var(--mono)}
+.welcome{padding:2rem 0 1rem}
+.welcome-title{font-size:13px;color:var(--text3);font-family:var(--mono);margin-bottom:1rem;text-align:center}
+.examples{display:flex;flex-direction:column;gap:6px}
+.example{font-size:12px;padding:8px 12px;border:0.5px solid var(--border2);border-radius:8px;color:var(--text2);font-family:var(--mono);cursor:pointer;transition:border-color .15s,color .15s}
+.example:hover{border-color:var(--purple);color:var(--purple2)}
+.msg-wrapper{position:relative}
+.copy-btn{position:absolute;top:8px;right:8px;font-size:10px;padding:3px 8px;border:0.5px solid var(--border2);border-radius:4px;background:transparent;color:var(--text3);cursor:pointer;font-family:var(--mono);opacity:0;transition:opacity .15s,color .15s}
+.msg-wrapper:hover .copy-btn{opacity:1}
+.copy-btn:hover{color:var(--purple2);border-color:var(--purple)}
+.copy-btn.copied{color:var(--green);border-color:var(--green)}
 .input-area{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(to top,var(--bg) 70%,transparent);padding:16px;display:flex;justify-content:center}
 .input-row{width:100%;max-width:720px;display:flex;gap:8px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:10px;padding:8px 8px 8px 14px;align-items:center}
 .input-row:focus-within{border-color:var(--purple)}
@@ -396,34 +406,27 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 #ask-btn{padding:7px 16px;font-size:13px;font-weight:500;background:var(--purple);color:white;border:none;border-radius:7px;cursor:pointer;font-family:var(--sans);white-space:nowrap}
 #ask-btn:hover{background:#6b4de8}#ask-btn:disabled{opacity:0.4;cursor:not-allowed}
 </style></head><body>
-<div class="header"><div class="logo"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="header-text"><h1>Kraken Futures Agent</h1><p>no api key required · live data · historical candles</p></div></div>
+<div class="header"><div class="logo"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="header-text"><h1>Kraken Futures API Agent</h1><p>calls public kraken futures endpoints · no api key required</p></div></div>
 <div class="dropdowns">
-  <div class="dropdown" id="dd-tickers">
-    <div class="dropdown-btn" onclick="toggleDD('dd-tickers')">Tickers <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+  <div class="dropdown" id="dd-analytics">
+    <div class="dropdown-btn" onclick="toggleDD('dd-analytics')">Analytics <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
     <div class="dropdown-menu">
-      <div class="dropdown-item" onclick="pick('dd-tickers','last price')">Last Price</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','current mark price')">Current Mark Price</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','current index price')">Current Index Price</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','vol24h')">24hVol$</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','volume quote')">24hVolQuote</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','open interest')">Open Interest</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','open24h')">24h Open</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','high24h')">24h High</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','low24h')">24h Low</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','vwap24h')">24h VWAP</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','last trade size')">Last Trade Size</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','current absolute funding rate')">Current Absolute Funding Rate</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','predicted absolute funding rate')">Predicted Absolute Funding Rate</div>
-      <div class="dropdown-item" onclick="pick('dd-tickers','24h change')">24h Change</div>
-    </div>
-  </div>
-  <div class="dropdown" id="dd-instruments">
-    <div class="dropdown-btn" onclick="toggleDD('dd-instruments')">Instruments <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
-    <div class="dropdown-menu">
-      <div class="dropdown-item" onclick="pick('dd-instruments','tick size')">Tick Size</div>
-      <div class="dropdown-item" onclick="pick('dd-instruments','impact mid size')">Impact Mid</div>
-      <div class="dropdown-item" onclick="pick('dd-instruments','max position size')">Max Position Size</div>
-      <div class="dropdown-item" onclick="pick('dd-instruments','contract trade precision')">Contract Trade Precision</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','aggressor-differential')">Aggressor Differential</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','cvd')">CVD</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','analytics funding')">Funding</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','future-basis')">Future Basis</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','liquidation-volume')">Liquidation Volume</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','liquidity')">Liquidity</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','long-short-info')">Long Short Info</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','long-short-ratio')">Long Short Ratio</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','open-interest')">Open Interest</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','orderbook')">Orderbook</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','rolling-volatility')">Rolling Volatility</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','slippage')">Slippage</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','spreads')">Spreads</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','top-traders')">Top Traders</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','trade-count')">Trade Count</div>
+      <div class="dropdown-item" onclick="pick('dd-analytics','trade-volume')">Trade Volume</div>
     </div>
   </div>
   <div class="dropdown" id="dd-charts">
@@ -433,29 +436,46 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
       <div class="dropdown-item" onclick="pick('dd-charts','What contracts are currently tradeable?')">Tradeable Contracts</div>
     </div>
   </div>
-  <div class="dropdown" id="dd-analytics">
-    <div class="dropdown-btn" onclick="toggleDD('dd-analytics')">Analytics <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+  <div class="dropdown" id="dd-instruments">
+    <div class="dropdown-btn" onclick="toggleDD('dd-instruments')">Instruments <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
     <div class="dropdown-menu">
-      <div class="dropdown-item" onclick="pick('dd-analytics','open-interest')">Open Interest</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','aggressor-differential')">Aggressor Differential</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','trade-volume')">Trade Volume</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','trade-count')">Trade Count</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','liquidation-volume')">Liquidation Volume</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','rolling-volatility')">Rolling Volatility</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','long-short-ratio')">Long Short Ratio</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','long-short-info')">Long Short Info</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','cvd')">CVD</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','top-traders')">Top Traders</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','orderbook')">Orderbook</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','spreads')">Spreads</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','liquidity')">Liquidity</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','slippage')">Slippage</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','future-basis')">Future Basis</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','funding')">Funding</div>
+      <div class="dropdown-item" onclick="pick('dd-instruments','contract trade precision')">Contract Trade Precision</div>
+      <div class="dropdown-item" onclick="pick('dd-instruments','impact mid size')">Impact Mid</div>
+      <div class="dropdown-item" onclick="pick('dd-instruments','max position size')">Max Position Size</div>
+      <div class="dropdown-item" onclick="pick('dd-instruments','tick size')">Tick Size</div>
+    </div>
+  </div>
+  <div class="dropdown" id="dd-tickers">
+    <div class="dropdown-btn" onclick="toggleDD('dd-tickers')">Tickers <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+    <div class="dropdown-menu">
+      <div class="dropdown-item" onclick="pick('dd-tickers','vol24h')">24hVol$</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','volume quote')">24hVolQuote</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','24h change')">24h Change</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','high24h')">24h High</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','low24h')">24h Low</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','open24h')">24h Open</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','vwap24h')">24h VWAP</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','current absolute funding rate')">Current Absolute Funding Rate</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','current index price')">Current Index Price</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','current mark price')">Current Mark Price</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','last price')">Last Price</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','last trade size')">Last Trade Size</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','open interest')">Open Interest</div>
+      <div class="dropdown-item" onclick="pick('dd-tickers','predicted absolute funding rate')">Predicted Absolute Funding Rate</div>
     </div>
   </div>
 </div>
-<div class="messages" id="messages"></div>
+<div class="messages" id="messages">
+  <div class="welcome" id="welcome">
+    <div class="welcome-title">Ask a question or pick a data type from the dropdowns above</div>
+    <div class="examples">
+      <div class="example" onclick="useExample(this)">1h trade candle for PF_SOLUSD on 6 April 2025 09:00</div>
+      <div class="example" onclick="useExample(this)">mark price for PF_PYTHUSD</div>
+      <div class="example" onclick="useExample(this)">impact mid for PI_XBTUSD</div>
+      <div class="example" onclick="useExample(this)">trade count for PF_TRXUSD 1d since 1 April 2026 00:00</div>
+    </div>
+  </div>
+</div>
 <div class="input-area"><div class="input-row"><input id="question" type="text" placeholder="Ask anything, or reply to a clarifying question here..." onkeydown="if(event.key==='Enter')askFromInput()"/><button id="ask-btn" onclick="askFromInput()">Send ↗</button></div></div>
 <script>
 let history=[];
@@ -480,10 +500,24 @@ document.addEventListener('click',function(e){
     document.querySelectorAll('.dropdown-btn').forEach(b=>b.classList.remove('open'));
   }
 });
-function addMsg(type,html,tag){const d=document.createElement('div');d.className='msg '+type;if(type==='user')d.textContent=html;else d.innerHTML=(tag?`<div class="ep-tag">${tag}</div>`:'')+`<div style="white-space:pre-wrap">${html}</div>`;document.getElementById('messages').appendChild(d);d.scrollIntoView({behavior:'smooth',block:'nearest'})}
+function addMsg(type,html,tag){const d=document.createElement('div');d.className='msg '+type;if(type==='user'){d.textContent=html;document.getElementById('messages').appendChild(d);}else{d.innerHTML=(tag?`<div class="ep-tag">${tag}</div>`:'')+`<div style="white-space:pre-wrap">${html}</div>`;const w=document.createElement('div');w.className='msg-wrapper';const btn=document.createElement('button');btn.className='copy-btn';btn.textContent='copy';btn.onclick=()=>{const t=d.innerText.replace(/^\u2192.*\n/,'').trim();navigator.clipboard.writeText(t).then(()=>{btn.textContent='copied';btn.classList.add('copied');setTimeout(()=>{btn.textContent='copy';btn.classList.remove('copied');},2000);});};w.appendChild(d);w.appendChild(btn);document.getElementById('messages').appendChild(w);}d.scrollIntoView({behavior:'smooth',block:'nearest'});}
 function addThinking(){const d=document.createElement('div');d.className='thinking';d.innerHTML='<div class="dots"><span></span><span></span><span></span></div><span>fetching...</span>';document.getElementById('messages').appendChild(d);return d}
 function renderCandle(r){const c=r.candle,o=parseFloat(c.open),h=parseFloat(c.high),l=parseFloat(c.low),cl=parseFloat(c.close),vol=c.volume?parseFloat(c.volume).toLocaleString(undefined,{maximumFractionDigits:2}):'—',chg=((cl-o)/o*100).toFixed(3),chgCol=cl>=o?'#4ade80':'#f87171',fmt=v=>'$'+parseFloat(v).toPrecision(12).replace(/\.?0+$/,''),dt=new Date(r.from_ms).toISOString().replace('T',' ').slice(0,16);return`<div class="candle-header">${r.symbol} · ${r.resolution} ${r.tick_type} · ${dt} UTC</div><div class="ohlc-grid"><div class="ohlc-cell"><div class="ohlc-label">open</div><div class="ohlc-val">${fmt(o)}</div></div><div class="ohlc-cell"><div class="ohlc-label">high</div><div class="ohlc-val" style="color:#4ade80">${fmt(h)}</div></div><div class="ohlc-cell"><div class="ohlc-label">low</div><div class="ohlc-val" style="color:#f87171">${fmt(l)}</div></div><div class="ohlc-cell"><div class="ohlc-label">close</div><div class="ohlc-val">${fmt(cl)}</div></div><div class="ohlc-cell"><div class="ohlc-label">change</div><div class="ohlc-val" style="color:${chgCol};font-size:13px">${cl>=o?'+':''}${chg}%</div></div><div class="ohlc-cell"><div class="ohlc-label">volume</div><div class="ohlc-val" style="font-size:12px">${vol}</div></div></div>`}
-async function ask(q){if(!q.trim())return;const btn=document.getElementById('ask-btn');document.getElementById('question').value='';btn.disabled=true;addMsg('user',q);const th=addThinking();try{const res=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,history})});const r=await res.json();th.remove();history.push({role:'user',content:q});history.push({role:'assistant',type:r.type,content:r.text||'',source:r.source||'',analytics_context:r.analytics_context||false,candle_context:r.candle_context||false});if(r.type==='candle')addMsg('agent',renderCandle(r),`→ ${r.source}`);else if(r.type==='clarify')addMsg('clarify',r.text);else if(r.type==='answer')addMsg('agent',r.text,r.source?`→ ${r.source}`:null);else if(r.type==='error')addMsg('error',r.text)}catch(e){th.remove();addMsg('error',e.message)}finally{btn.disabled=false;document.getElementById('question').focus()}}
+async function ask(q){if(!q.trim())return;const btn=document.getElementById('ask-btn');document.getElementById('question').value='';btn.disabled=true;const w=document.getElementById('welcome');if(w)w.remove();addMsg('user',q);const th=addThinking();try{const res=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,history})});const r=await res.json();th.remove();history.push({role:'user',content:q});history.push({role:'assistant',type:r.type,content:r.text||'',source:r.source||'',analytics_context:r.analytics_context||false,candle_context:r.candle_context||false});if(r.type==='candle')addMsg('agent',renderCandle(r),`→ ${r.source}`);else if(r.type==='clarify')addMsg('clarify',r.text);else if(r.type==='answer')addMsg('agent',r.source&&r.source.startsWith('analytics')?convertTimestamps(r.text):r.text,r.source?`→ ${r.source}`:null);else if(r.type==='error')addMsg('error',r.text)}catch(e){th.remove();addMsg('error',e.message)}finally{btn.disabled=false;document.getElementById('question').focus()}}
+function convertTimestamps(text){
+  // Match standalone unix timestamps (10 digits, between 1600000000 and 2000000000)
+  return text.replace(/\b(1[6-9]\d{8}|20\d{8})\b/g, function(ts){
+    const n = parseInt(ts);
+    const d = new Date(n * 1000);
+    const pad = x => String(x).padStart(2,'0');
+    const readable = d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())+' '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+' UTC';
+    return ts+' ('+readable+')';
+  });
+}
+function useExample(el){
+  document.getElementById('question').value = el.textContent;
+  document.getElementById('question').focus();
+}
 function askFromInput(){const v=document.getElementById('question').value.trim();if(v)ask(v)}
 </script></body></html>"""
 
