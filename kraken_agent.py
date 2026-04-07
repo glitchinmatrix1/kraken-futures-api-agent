@@ -254,12 +254,12 @@ def process(text, hist):
             tl_stripped = re.sub(r'\d{1,2}:\d{2}\s*(?:utc)?\b', "", tl_stripped, count=1)
             dt_to, _ = extract_datetime(tl_stripped)
             if dt_to and int(dt_to.timestamp()) != int(dt_from.timestamp()):
-                params["to"] = int(dt_to.timestamp())
+                params["to"] = int(dt_to.timestamp()) + INTERVAL_S[res]
             else:
                 all_times = re.findall(r'\b(\d{1,2}):(\d{2})\s*(?:utc)?\b', text.lower())
                 if len(all_times) >= 2:
                     h2, m2 = int(all_times[1][0]), int(all_times[1][1])
-                    params["to"] = int(dt_from.replace(hour=h2, minute=m2).timestamp())
+                    params["to"] = int(dt_from.replace(hour=h2, minute=m2).timestamp()) + INTERVAL_S[res]
                 else:
                     # Default window scales with interval so you get ~24 data points
                     default_windows = {"1m":1800,"5m":7200,"15m":21600,"30m":43200,"1h":86400,"4h":345600,"12h":1036800,"1d":2592000,"1w":7776000}
