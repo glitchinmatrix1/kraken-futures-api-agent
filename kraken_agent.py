@@ -91,6 +91,17 @@ def extract_tick_type(t):
 
 def extract_analytics_type(t):
     tl = t.lower()
+    # If user explicitly says "analytics", always route to analytics
+    explicit_analytics = "analytics" in tl
+    # These phrases should route to tickers/instruments unless analytics is explicitly mentioned
+    if not explicit_analytics:
+        ticker_phrases = [
+            "funding rate", "absolute funding", "current funding", "predicted funding", "funding prediction",
+            "open interest",  # would match "open-interest" analytics type
+        ]
+        for phrase in ticker_phrases:
+            if phrase in tl:
+                return None
     for a in ANALYTICS_TYPES:
         if a in tl or a.replace("-"," ") in tl:
             return a
@@ -176,12 +187,14 @@ def process(text, hist):
                                 analytics_type = at
                                 break
                 elif e.get("type") == "answer" and e.get("source","").startswith("analytics/"):
-                    # only inherit if the current message looks like a follow-up analytics query
-                    # (has a symbol + resolution/datetime but no live data field)
+                    # only inherit if no live data field detected and no candle keywords
+                    # and the message contains a resolution or datetime (looks like a data query)
                     has_field = find_field(text) is not None
+                    has_candle_kw = any(k in text.lower() for k in ["candle","ohlc","chart"])
+                    has_tick = extract_tick_type(text) is not None
                     has_res = extract_resolution(text) is not None
                     has_dt = extract_datetime(text)[0] is not None
-                    is_followup = not has_field and (has_res or has_dt)
+                    is_followup = not has_field and not has_candle_kw and not has_tick and (has_res or has_dt)
                     if is_followup:
                         analytics_type = e.get("source","").replace("analytics/","")
                 break
@@ -232,12 +245,25 @@ def process(text, hist):
             params["to"] = now_s
         else:
             params["since"] = int(dt_from.timestamp())
-            all_times = re.findall(r'\b(\d{1,2}):(\d{2})\s*(?:utc)?\b', text.lower())
-            if len(all_times) >= 2:
-                h2, m2 = int(all_times[1][0]), int(all_times[1][1])
-                params["to"] = int(dt_from.replace(hour=h2, minute=m2).timestamp())
+            # Try second full datetime (handles cross-day ranges like "April 6 23:00 to April 7 11:00")
+            tl_stripped = text.lower()
+            # Strip first date match using month-name patterns
+            tl_stripped = re.sub(r'\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{4}', "", tl_stripped, count=1)
+            tl_stripped = re.sub(r'(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{1,2}(?:st|nd|rd|th)?\s+\d{4}', "", tl_stripped, count=1)
+            tl_stripped = re.sub(r'\d{4}[-/]\d{1,2}[-/]\d{1,2}', "", tl_stripped, count=1)
+            tl_stripped = re.sub(r'\d{1,2}:\d{2}\s*(?:utc)?\b', "", tl_stripped, count=1)
+            dt_to, _ = extract_datetime(tl_stripped)
+            if dt_to and int(dt_to.timestamp()) != int(dt_from.timestamp()):
+                params["to"] = int(dt_to.timestamp())
             else:
-                params["to"] = params["since"] + 3600  # default to 1 hour window
+                all_times = re.findall(r'\b(\d{1,2}):(\d{2})\s*(?:utc)?\b', text.lower())
+                if len(all_times) >= 2:
+                    h2, m2 = int(all_times[1][0]), int(all_times[1][1])
+                    params["to"] = int(dt_from.replace(hour=h2, minute=m2).timestamp())
+                else:
+                    # Default window scales with interval so you get ~24 data points
+                    default_windows = {"1m":1800,"5m":7200,"15m":21600,"30m":43200,"1h":86400,"4h":345600,"12h":1036800,"1d":2592000,"1w":7776000}
+                    params["to"] = params["since"] + default_windows.get(res, 3600)
         try:
             data = kraken_get(f"/api/charts/v1/analytics/{sym}/{analytics_type}", params)
             return {"type":"answer","source":f"analytics/{analytics_type}","text":json.dumps(data, indent=2)}
