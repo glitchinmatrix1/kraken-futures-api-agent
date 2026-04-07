@@ -23,10 +23,6 @@ ANALYTICS_TYPES = [
     "cvd","top-traders","orderbook","spreads","liquidity","slippage",
     "future-basis","funding"
 ]
-# Analytics endpoints that do NOT require a symbol
-NO_SYMBOL_ANALYTICS = {"liquidity-pool"}
-# Analytics endpoints that don't use a 'to' param — they return all data from 'since' to now
-NO_TO_ANALYTICS = {"liquidity-pool"}
 TICK_TYPES = {"trade":"trade","trades":"trade","mark":"mark","spot":"spot","index":"spot"}
 LIVE_FIELDS = {
     # tickers - price
@@ -95,9 +91,6 @@ def extract_tick_type(t):
 
 def extract_analytics_type(t):
     tl = t.lower()
-    # liquidity pool is a special no-symbol endpoint
-    if "liquidity pool" in tl or "liquidity-pool" in tl:
-        return "liquidity-pool"
     # If user explicitly says "analytics", always route to analytics
     explicit_analytics = "analytics" in tl
     # These phrases should route to tickers/instruments unless analytics is explicitly mentioned
@@ -237,21 +230,14 @@ def process(text, hist):
             if not dt_from: dt_from, amb_from = extract_datetime(msg)
             if not snapshot and any(k in msg.lower() for k in ("now","latest","snapshot")): snapshot = True
         missing = []
-        if analytics_type not in NO_SYMBOL_ANALYTICS and not sym: missing.append("symbol (e.g. PF_ETHUSD)")
+        if not sym: missing.append("symbol (e.g. PF_ETHUSD)")
         if not res: missing.append("interval (e.g. 1m, 5m, 1h)")
-        if not snapshot and not dt_from:
-            if analytics_type == "liquidity-pool":
-                missing.append("a 'since' datetime UTC including the year — e.g. '6 April 2026 00:00'. Returns all data from that point to now")
-            else:
-                missing.append("a 'since' datetime UTC including the year — e.g. '6 April 2026 15:00 UTC' (optionally add a second time for 'to'). Or say 'latest' for the most recent data point")
-        elif not snapshot and amb_from and res not in ("1d","1w"): missing.append("a start time UTC (e.g. 15:00 UTC)")
+        if not snapshot and not dt_from: missing.append("a 'since' datetime UTC including the year — e.g. '6 April 2026 15:00 UTC' (optionally add a second time for 'to'). Or say 'latest' for the most recent data point")
+        elif not snapshot and amb_from: missing.append("a start time UTC (e.g. 15:00 UTC)")
         if missing:
             return {"type":"clarify","text":"Still need: "+" and ".join(missing)+".","analytics_context":True}
         import time as _time
         now_s = int(_time.time())
-        # For daily/weekly intervals snap since to midnight UTC to align with API buckets
-        if res in ("1d","1w") and dt_from:
-            dt_from = dt_from.replace(hour=0, minute=0, second=0)
         params = {"interval": INTERVAL_S[res]}
         if snapshot:
             # Return only the latest bucket: since = now - one interval
@@ -259,32 +245,27 @@ def process(text, hist):
             params["to"] = now_s
         else:
             params["since"] = int(dt_from.timestamp())
-            if analytics_type not in NO_TO_ANALYTICS:
-                # Try second full datetime (handles cross-day ranges like "April 6 23:00 to April 7 11:00")
-                tl_stripped = text.lower()
-                tl_stripped = re.sub(r'\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{4}', "", tl_stripped, count=1)
-                tl_stripped = re.sub(r'(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{1,2}(?:st|nd|rd|th)?\s+\d{4}', "", tl_stripped, count=1)
-                tl_stripped = re.sub(r'\d{4}[-/]\d{1,2}[-/]\d{1,2}', "", tl_stripped, count=1)
-                tl_stripped = re.sub(r'\d{1,2}:\d{2}\s*(?:utc)?\b', "", tl_stripped, count=1)
-                dt_to, _ = extract_datetime(tl_stripped)
-                if dt_to and int(dt_to.timestamp()) != int(dt_from.timestamp()):
-                    params["to"] = int(dt_to.timestamp()) + INTERVAL_S[res]
-                else:
-                    all_times = re.findall(r'\b(\d{1,2}):(\d{2})\s*(?:utc)?\b', text.lower())
-                    if len(all_times) >= 2:
-                        h2, m2 = int(all_times[1][0]), int(all_times[1][1])
-                        params["to"] = int(dt_from.replace(hour=h2, minute=m2).timestamp()) + INTERVAL_S[res]
-                    else:
-                        default_windows = {"1m":1800,"5m":7200,"15m":21600,"30m":43200,"1h":86400,"4h":345600,"12h":1036800,"1d":2592000,"1w":7776000}
-                        params["to"] = params["since"] + default_windows.get(res, 3600)
-        try:
-            path = f"/api/charts/v1/analytics/{analytics_type}" if analytics_type in NO_SYMBOL_ANALYTICS else f"/api/charts/v1/analytics/{sym}/{analytics_type}"
-            # liquidity-pool only supports since + interval, to is ignored
-            if analytics_type == "liquidity-pool":
-                lp_params = {"since": params["since"], "interval": params["interval"]}
-                data = kraken_get(path, lp_params)
+            # Try second full datetime (handles cross-day ranges like "April 6 23:00 to April 7 11:00")
+            tl_stripped = text.lower()
+            # Strip first date match using month-name patterns
+            tl_stripped = re.sub(r'\d{1,2}(?:st|nd|rd|th)?(?:\s+of)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{4}', "", tl_stripped, count=1)
+            tl_stripped = re.sub(r'(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{1,2}(?:st|nd|rd|th)?\s+\d{4}', "", tl_stripped, count=1)
+            tl_stripped = re.sub(r'\d{4}[-/]\d{1,2}[-/]\d{1,2}', "", tl_stripped, count=1)
+            tl_stripped = re.sub(r'\d{1,2}:\d{2}\s*(?:utc)?\b', "", tl_stripped, count=1)
+            dt_to, _ = extract_datetime(tl_stripped)
+            if dt_to and int(dt_to.timestamp()) != int(dt_from.timestamp()):
+                params["to"] = int(dt_to.timestamp()) + INTERVAL_S[res]
             else:
-                data = kraken_get(path, params)
+                all_times = re.findall(r'\b(\d{1,2}):(\d{2})\s*(?:utc)?\b', text.lower())
+                if len(all_times) >= 2:
+                    h2, m2 = int(all_times[1][0]), int(all_times[1][1])
+                    params["to"] = int(dt_from.replace(hour=h2, minute=m2).timestamp()) + INTERVAL_S[res]
+                else:
+                    # Default window scales with interval so you get ~24 data points
+                    default_windows = {"1m":1800,"5m":7200,"15m":21600,"30m":43200,"1h":86400,"4h":345600,"12h":1036800,"1d":2592000,"1w":7776000}
+                    params["to"] = params["since"] + default_windows.get(res, 3600)
+        try:
+            data = kraken_get(f"/api/charts/v1/analytics/{sym}/{analytics_type}", params)
             return {"type":"answer","source":f"analytics/{analytics_type}","text":json.dumps(data, indent=2)}
         except Exception as e:
             return {"type":"error","text":f"Analytics fetch failed: {e}"}
@@ -436,7 +417,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
       <div class="dropdown-item" onclick="pick('dd-analytics','future-basis')">Future Basis</div>
       <div class="dropdown-item" onclick="pick('dd-analytics','liquidation-volume')">Liquidation Volume</div>
       <div class="dropdown-item" onclick="pick('dd-analytics','liquidity')">Liquidity</div>
-      <div class="dropdown-item" onclick="pick('dd-analytics','liquidity pool')">Liquidity Pool</div>
       <div class="dropdown-item" onclick="pick('dd-analytics','long-short-info')">Long Short Info</div>
       <div class="dropdown-item" onclick="pick('dd-analytics','long-short-ratio')">Long Short Ratio</div>
       <div class="dropdown-item" onclick="pick('dd-analytics','open-interest')">Open Interest</div>
