@@ -43,6 +43,8 @@ LIVE_FIELDS = {
     "24h vwap":("tickers","vwap24h"),"vwap":("tickers","vwap24h"),"vwap24h":("tickers","vwap24h"),
     "last trade size":("tickers","lastSize"),"last size":("tickers","lastSize"),"lastsize":("tickers","lastSize"),
     "24h change":("tickers","change24h"),"change":("tickers","change24h"),
+    # market data
+    "live orderbook":("marketdata","orderbook"),"orderbook":("marketdata","orderbook"),
     # instruments
     "impact mid size":("instruments","impactMidSize"),"impact mid":("instruments","impactMidSize"),
     "tick size":("instruments","tickSize"),
@@ -98,6 +100,7 @@ def extract_analytics_type(t):
         ticker_phrases = [
             "funding rate", "absolute funding", "current funding", "predicted funding", "funding prediction",
             "open interest",  # would match "open-interest" analytics type
+            "live orderbook",  # would match analytics "orderbook" type
         ]
         for phrase in ticker_phrases:
             if phrase in tl:
@@ -315,18 +318,46 @@ def process(text, hist):
         except Exception as e: return {"type":"error","text":f"Candle fetch failed: {e}"}
 
     # ── Live data (tickers / instruments) ──
+    # ── Market Data (live orderbook etc) ──
     sym=extract_symbol(text); fi=find_field(text)
+    if fi and fi[0] == "marketdata" and not sym:
+        # scan history for symbol
+        for e in reversed(hist):
+            if e.get("role") == "assistant" and e.get("type") in ("answer","candle"): break
+            if e.get("role") == "user":
+                sym = extract_symbol(e.get("content",""))
+                if sym: break
     # If field missing from current message, scan recent history (up to last answer) for it
+    # Only user messages — assistant responses contain field-like words (OPEN, HIGH etc)
     if not fi:
         for e in reversed(hist):
             if e.get("role") == "assistant" and e.get("type") in ("answer","candle"):
                 break
-            msg = e.get("content","")
-            fi = find_field(msg)
-            if fi: break
+            if e.get("role") == "user":
+                fi = find_field(e.get("content",""))
+                if fi: break
     if not sym and not fi: return {"type":"clarify","text":"Could you be more specific? Include a symbol (e.g. PF_ETHUSD) and what you'd like to know (e.g. mark price, funding rate)."}
     if not sym: return {"type":"clarify","text":"Which contract symbol? e.g. PF_ETHUSD, PF_XBTUSD"}
     src,field = fi if fi else ("tickers",None)
+
+    if src == "marketdata" and field == "orderbook":
+        try:
+            data = kraken_get("/derivatives/api/v3/orderbook", {"symbol": sym})
+            ob = data.get("orderBook", {})
+            # Top 20 bids = highest prices (bids are already sorted descending)
+            bids = sorted(ob.get("bids", []), key=lambda x: float(x[0]), reverse=True)[:20]
+            # Bottom 20 asks = lowest prices (asks are already sorted ascending)
+            asks = sorted(ob.get("asks", []), key=lambda x: float(x[0]))[:20]
+            lines = [f"Live Orderbook for {sym}:", "", "  Bids (price, size):"]
+            for b in bids:
+                lines.append(f"    {b[0]:>14}  {b[1]}")
+            lines.append("")
+            lines.append("  Asks (price, size):")
+            for a in asks:
+                lines.append(f"    {a[0]:>14}  {a[1]}")
+            return {"type":"answer","source":"marketdata/orderbook","text":"\n".join(lines)}
+        except Exception as e:
+            return {"type":"error","text":str(e)}
     try:
         if src=="tickers":
             d=kraken_get("/derivatives/api/v3/tickers")
@@ -464,6 +495,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
       <div class="dropdown-item" onclick="pick('dd-tickers','last trade size')">Last Trade Size</div>
       <div class="dropdown-item" onclick="pick('dd-tickers','open interest')">Open Interest</div>
       <div class="dropdown-item" onclick="pick('dd-tickers','predicted absolute funding rate')">Predicted Absolute Funding Rate</div>
+    </div>
+  </div>
+  <div class="dropdown" id="dd-marketdata">
+    <div class="dropdown-btn" onclick="toggleDD('dd-marketdata')">Market Data <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+    <div class="dropdown-menu">
+      <div class="dropdown-item" onclick="pick('dd-marketdata','live orderbook')">Live Orderbook</div>
     </div>
   </div>
 </div>
